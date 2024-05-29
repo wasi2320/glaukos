@@ -3,8 +3,11 @@ name: Download and Push IAR File
 on:
   workflow_dispatch:
     inputs:
-      file_url:
-        description: 'URL to download the IAR file'
+      integration_id:
+        description: 'Integration ID'
+        required: true
+      integration_version:
+        description: 'Integration Version'
         required: true
 
 jobs:
@@ -21,6 +24,7 @@ jobs:
         BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
         IDCS_URL: ${{ secrets.IDCS_URL }}
       run: |
+        # Authenticate to get the Bearer token
         AUTH_RESPONSE=$(curl -X POST \
           "$IDCS_URL/oauth2/v1/token" \
           -H 'Accept: application/json' \
@@ -31,13 +35,16 @@ jobs:
 
         ACCESS_TOKEN=$(echo $AUTH_RESPONSE | jq -r '.access_token')
 
+        # Download the IAR file using the Bearer token
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
         curl -o downloaded.iar -H "Authorization: Bearer $ACCESS_TOKEN" \
-          "${{ github.event.inputs.file_url }}"
+          "https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
 
     - name: Commit and Push IAR File
       run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
+        git config --global user.name 'wasif'
+        git config --global user.email 'wasifsuhail23@gmail.com'
         mv downloaded.iar path/to/store/in/repo/
         git add path/to/store/in/repo/downloaded.iar
         git commit -m "Add downloaded IAR file"

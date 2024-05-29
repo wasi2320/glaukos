@@ -39,7 +39,7 @@ jobs:
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        TARGET_DIR="path/to/store/in/repo"
+        TARGET_DIR="iar-files/repo"
         mkdir -p $TARGET_DIR
         mv "${{ github.event.inputs.integration_id }}.iar" $TARGET_DIR/
         git add $TARGET_DIR/"${{ github.event.inputs.integration_id }}.iar"

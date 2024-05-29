@@ -26,30 +26,9 @@ jobs:
       env:
         BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
         IDCS_URL: ${{ secrets.IDCS_URL }}
+        TOKEN: ${{ secrets.TOKEN }}
       run: |
-        echo "Authenticating with IDCS"
-        AUTH_RESPONSE=$(curl -X POST \
-          "$IDCS_URL/oauth2/v1/token" \
-          -H 'Accept: application/json' \
-          -H "Authorization: Basic $BASIC_AUTH" \
-          -H 'Cache-Control: no-cache' \
-          -H 'Content-Type: application/x-www-form-urlencoded' \
-          -d 'grant_type=client_credentials&scope=https://27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com:443urn:opc:resource:consumer::all https://27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com:443/ic/api/') || { echo "Authentication failed"; exit 1; }
-
-        echo "Auth response: $AUTH_RESPONSE"
-        ACCESS_TOKEN=$(echo $AUTH_RESPONSE | jq -r '.access_token')
-
-        if [ -z "$ACCESS_TOKEN" ]; then
-          echo "Failed to retrieve access token"
-          exit 1
-        fi
-
-        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
-        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
-        CONTENT_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
-        echo "Content URL: $CONTENT_URL"
-
-        echo "Showing content from the integration URL"
+        more $TOKEN
         curl -H "Authorization: Bearer $TOKEN" "$CONTENT_URL" || { echo "Failed to retrieve content"; exit 1; }
 
     - name: Download IAR File

@@ -28,7 +28,6 @@ jobs:
         IDCS_URL: ${{ secrets.IDCS_URL }}
         TOKEN: ${{ secrets.TOKEN }}
       run: |
-        more $TOKEN
         curl -H "Authorization: Bearer $TOKEN" "$CONTENT_URL" || { echo "Failed to retrieve content"; exit 1; }
 
     - name: Download IAR File

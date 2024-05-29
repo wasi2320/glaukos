@@ -21,26 +21,17 @@ jobs:
     - name: Install jq
       run: sudo apt-get install -y jq
 
-    - name: Authenticate and Show Content
-      id: authenticate_and_show
-      env:
-        BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
-        IDCS_URL: ${{ secrets.IDCS_URL }}
-        TOKEN: ${{ secrets.TOKEN }}
-      run: |
-        curl -H "Authorization: Bearer $TOKEN" "$CONTENT_URL" || { echo "Failed to retrieve content"; exit 1; }
-
     - name: Download IAR File
       id: download_iar
       env:
-        ACCESS_TOKEN: ${{ steps.authenticate_and_show.outputs.ACCESS_TOKEN }}
+        ACCESS_TOKEN: ${{ secrets.TOKEN }}
       run: |
         INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
         DOWNLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
         echo "Download URL: $DOWNLOAD_URL"
 
-        curl -o "${INTEGRATION_ID}.iar" -H "Authorization: Bearer $TOKEN" "$DOWNLOAD_URL" || { echo "Download failed"; exit 1; }
+        curl -o "${INTEGRATION_ID}.iar" -H "Authorization: Bearer $ACCESS_TOKEN" "$DOWNLOAD_URL" || { echo "Download failed"; exit 1; }
 
     - name: Commit and Push IAR File
       env:

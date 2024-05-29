@@ -50,7 +50,10 @@ jobs:
         DOWNLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
         echo "Download URL: $DOWNLOAD_URL"
 
-        curl -o downloaded.iar -H "Authorization: Bearer $ACCESS_TOKEN" "$DOWNLOAD_URL" || { echo "Download failed"; exit 1; }
+        curl -o "${INTEGRATION_ID}.iar" -H "Authorization: Bearer $ACCESS_TOKEN" "$DOWNLOAD_URL" || { echo "Download failed"; exit 1; }
+
+    - name: View IAR File Content
+      run: more "${{ github.event.inputs.integration_id }}.iar"
 
     - name: Commit and Push IAR File
       env:
@@ -58,9 +61,9 @@ jobs:
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        TARGET_DIR="path/to/store/in/repo"
+        TARGET_DIR="iar-files"
         mkdir -p $TARGET_DIR
-        mv downloaded.iar $TARGET_DIR/
-        git add $TARGET_DIR/downloaded.iar
-        git commit -m "Add downloaded IAR file"
+        mv "${{ github.event.inputs.integration_id }}.iar" $TARGET_DIR/
+        git add $TARGET_DIR/"${{ github.event.inputs.integration_id }}.iar"
+        git commit -m "Add ${{ github.event.inputs.integration_id }}.iar file"
         git push

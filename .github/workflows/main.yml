@@ -2,6 +2,13 @@ name: Download and Push IAR File
 
 on:
   workflow_dispatch:
+    inputs:
+      integration_id:
+        description: 'Integration ID'
+        required: true
+      integration_version:
+        description: 'Integration Version'
+        required: true
 
 jobs:
   download_and_push:
@@ -10,3 +17,37 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+
+    - name: Authenticate and Download IAR File
+      id: download_iar
+      env:
+        BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
+        IDCS_URL: ${{ secrets.IDCS_URL }}
+      run: |
+        # Authenticate to get the Bearer token
+        AUTH_RESPONSE=$(curl -X POST \
+          "$IDCS_URL/oauth2/v1/token" \
+          -H 'Accept: application/json' \
+          -H "Authorization: Basic $BASIC_AUTH" \
+          -H 'Cache-Control: no-cache' \
+          -H 'Content-Type: application/x-www-form-urlencoded' \
+          -d 'grant_type=client_credentials&scope=https://27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com:443urn:opc:resource:consumer::all https://27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com:443/ic/api/')
+
+        ACCESS_TOKEN=$(echo $AUTH_RESPONSE | jq -r '.access_token')
+        
+        echo $ACCESS_TOKEN
+        
+        # Download the IAR file using the Bearer token
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
+        curl -o downloaded.iar -H "Authorization: Bearer $ACCESS_TOKEN" \
+          "https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
+
+    - name: Commit and Push IAR File
+      run: |
+        git config --global user.name 'wasif'
+        git config --global user.email 'wasifsuhail23@gmail.com'
+        mv downloaded.iar path/to/store/in/repo/
+        git add path/to/store/in/repo/downloaded.iar
+        git commit -m "Add downloaded IAR file"
+        git push

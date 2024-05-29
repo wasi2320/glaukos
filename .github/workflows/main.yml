@@ -21,8 +21,8 @@ jobs:
     - name: Install jq
       run: sudo apt-get install -y jq
 
-    - name: Authenticate and Download IAR File
-      id: download_iar
+    - name: Authenticate and Show Content
+      id: authenticate_and_show
       env:
         BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
         IDCS_URL: ${{ secrets.IDCS_URL }}
@@ -44,7 +44,19 @@ jobs:
           exit 1
         fi
 
-        echo "Downloading IAR file"
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
+        CONTENT_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
+        echo "Content URL: $CONTENT_URL"
+
+        echo "Showing content from the integration URL"
+        curl -H "Authorization: Bearer $ACCESS_TOKEN" "$CONTENT_URL" || { echo "Failed to retrieve content"; exit 1; }
+
+    - name: Download IAR File
+      id: download_iar
+      env:
+        ACCESS_TOKEN: ${{ steps.authenticate_and_show.outputs.ACCESS_TOKEN }}
+      run: |
         INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
         DOWNLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
@@ -52,16 +64,13 @@ jobs:
 
         curl -o "${INTEGRATION_ID}.iar" -H "Authorization: Bearer $ACCESS_TOKEN" "$DOWNLOAD_URL" || { echo "Download failed"; exit 1; }
 
-    - name: View IAR File Content
-      run: more "${{ github.event.inputs.integration_id }}.iar"
-
     - name: Commit and Push IAR File
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        TARGET_DIR="iar-files"
+        TARGET_DIR="path/to/store/in/repo"
         mkdir -p $TARGET_DIR
         mv "${{ github.event.inputs.integration_id }}.iar" $TARGET_DIR/
         git add $TARGET_DIR/"${{ github.event.inputs.integration_id }}.iar"

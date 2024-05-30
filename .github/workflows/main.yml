@@ -35,6 +35,8 @@ jobs:
 
         # List files for debugging
         ls -l
+        echo "Downloaded IAR file:"
+        ls -l "${INTEGRATION_ID}.iar"
 
     - name: Verify IAR File Download
       run: |
@@ -54,7 +56,10 @@ jobs:
         TARGET_DIR="path/to/store/in/repo"
         mkdir -p $TARGET_DIR
         mv "${INTEGRATION_ID}.iar" $TARGET_DIR/
+        echo "Moved IAR file to target directory:"
+        ls -l $TARGET_DIR
         git add $TARGET_DIR/"${INTEGRATION_ID}.iar"
+        git status
         git commit -m "Add ${INTEGRATION_ID}.iar file"
         git push
 

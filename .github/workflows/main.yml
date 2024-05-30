@@ -39,9 +39,19 @@ jobs:
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        TARGET_DIR="iar-files/repo"
+        TARGET_DIR="path/to/store/in/repo"
         mkdir -p $TARGET_DIR
-        mv "${{ github.event.inputs.integration_id }}.iar" $TARGET_DIR/
-        git add $TARGET_DIR/"${{ github.event.inputs.integration_id }}.iar"
-        git commit -m "Add ${{ github.event.inputs.integration_id }}.iar file"
+        mv "${INTEGRATION_ID}.iar" $TARGET_DIR/
+        git add $TARGET_DIR/"${INTEGRATION_ID}.iar"
+        git commit -m "Add ${INTEGRATION_ID}.iar file"
         git push
+
+    - name: Create and Push Tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
+        TAG_NAME="${INTEGRATION_ID}-${INTEGRATION_VERSION}"
+        git tag $TAG_NAME
+        git push origin $TAG_NAME

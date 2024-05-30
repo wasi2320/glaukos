@@ -48,6 +48,16 @@ jobs:
           exit 1
         fi
 
+    - name: Append Timestamp to IAR File
+      run: |
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        TARGET_DIR="path/to/store/in/repo"
+        TIMESTAMP=$(date)
+        echo "\n# Timestamp: $TIMESTAMP" >> "${INTEGRATION_ID}.iar"
+        mv "${INTEGRATION_ID}.iar" $TARGET_DIR/
+        echo "Moved and modified IAR file with timestamp to target directory:"
+        ls -l $TARGET_DIR
+
     - name: Commit and Push IAR File
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,19 +66,8 @@ jobs:
         git config --global user.email 'github-actions@github.com'
         INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         TARGET_DIR="path/to/store/in/repo"
-        mkdir -p $TARGET_DIR
-        mv "${INTEGRATION_ID}.iar" $TARGET_DIR/
-        echo "Moved IAR file to target directory:"
-        ls -l $TARGET_DIR
-
-        # Touch the file to ensure its timestamp is updated
-        touch $TARGET_DIR/"${INTEGRATION_ID}.iar"
-
-        # Debugging: Show the git status and diff
-        git status
-        git diff $TARGET_DIR/"${INTEGRATION_ID}.iar"
-
         git add -f $TARGET_DIR/"${INTEGRATION_ID}.iar"
+        git status
         git commit -m "Update ${INTEGRATION_ID}.iar file"
         git push
 

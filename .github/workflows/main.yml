@@ -60,9 +60,16 @@ jobs:
         mv "${INTEGRATION_ID}.iar" $TARGET_DIR/
         echo "Moved IAR file to target directory:"
         ls -l $TARGET_DIR
-        git add -f $TARGET_DIR/"${INTEGRATION_ID}.iar"
+
+        # Touch the file to ensure its timestamp is updated
+        touch $TARGET_DIR/"${INTEGRATION_ID}.iar"
+
+        # Debugging: Show the git status and diff
         git status
-        git commit -am "Update ${INTEGRATION_ID}.iar file"
+        git diff $TARGET_DIR/"${INTEGRATION_ID}.iar"
+
+        git add -f $TARGET_DIR/"${INTEGRATION_ID}.iar"
+        git commit -m "Update ${INTEGRATION_ID}.iar file"
         git push
 
     - name: Create and Push Tag

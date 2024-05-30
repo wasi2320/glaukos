@@ -33,12 +33,24 @@ jobs:
 
         curl -o "${INTEGRATION_ID}.iar" -H "Authorization: Bearer $ACCESS_TOKEN" "$DOWNLOAD_URL" || { echo "Download failed"; exit 1; }
 
+        # List files for debugging
+        ls -l
+
+    - name: Verify IAR File Download
+      run: |
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        if [ ! -f "${INTEGRATION_ID}.iar" ]; then
+          echo "IAR file not found!"
+          exit 1
+        fi
+
     - name: Commit and Push IAR File
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         TARGET_DIR="path/to/store/in/repo"
         mkdir -p $TARGET_DIR
         mv "${INTEGRATION_ID}.iar" $TARGET_DIR/

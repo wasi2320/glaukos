@@ -62,7 +62,7 @@ jobs:
         ls -l $TARGET_DIR
         git add -f $TARGET_DIR/"${INTEGRATION_ID}.iar"
         git status
-        git commit -m "Add ${INTEGRATION_ID}.iar file"
+        git commit -am "Update ${INTEGRATION_ID}.iar file"
         git push
 
     - name: Create and Push Tag

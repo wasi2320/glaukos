@@ -112,5 +112,10 @@ jobs:
         UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/deploy?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
         
         echo "Deploying IAR file to new server..."
-        curl -X POST -F "file=@${IAR_FILE}" -H "Authorization: Bearer $ACCESS_TOKEN" "$UPLOAD_URL" || { echo "Deployment failed"; exit 1; }
+        # Read the content of the IAR file and convert it to a base64 string
+        IAR_CONTENT=$(base64 "${IAR_FILE}")
+        # Prepare JSON payload
+        JSON_PAYLOAD=$(jq -n --arg content "$IAR_CONTENT" '{file: $content}')
+        # Send the request
+        curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "$UPLOAD_URL" || { echo "Deployment failed"; exit 1; }
         echo "Deployment successful!"

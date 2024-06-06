@@ -103,19 +103,20 @@ jobs:
 
     - name: Deploy to New Integration Server
       env:
-        ACCESS_TOKEN: ${{ secrets.NEW_SERVER_TOKEN }}
+        TOKEN_TYPE: "Bearer "
+        BEARER_TOKEN: ${{ secrets.NEW_SERVER_TOKEN }}
       run: |
         INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
         TARGET_DIR="path/to/store/in/repo"
         IAR_FILE="${TARGET_DIR}/${INTEGRATION_ID}.iar"
-        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
+        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/archive?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
         
         echo "Deploying IAR file to new server..."
-        # Read the content of the IAR file and convert it to a base64 string
-        IAR_CONTENT=$(base64 "${IAR_FILE}")
-        # Prepare JSON payload
-        JSON_PAYLOAD=$(jq -n --arg content "$IAR_CONTENT" '{file: $content}')
-        # Send the request
-        curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -H "X-HTTP-Method-Override: PATCH" -d "$JSON_PAYLOAD" "$UPLOAD_URL" || { echo "Deployment failed"; exit 1; }
+        echo "Using Integration ID: $INTEGRATION_ID"
+        echo "Using Integration Version: $INTEGRATION_VERSION"
+        echo "Using Upload URL: $UPLOAD_URL"
+        
+        # Send the request using the provided curl command
+        curl -X POST -v -k --insecure --location-trusted -F "file=@${IAR_FILE}" -F 'type=application/octet-stream' "$UPLOAD_URL" --ssl-no-revoke --header "Authorization: ${TOKEN_TYPE}${BEARER_TOKEN}" || { echo "Deployment failed"; exit 1; }
         echo "Deployment successful!"

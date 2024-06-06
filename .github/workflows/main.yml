@@ -117,7 +117,7 @@ jobs:
         echo "Using Upload URL: $UPLOAD_URL"
         
         # Send the request using the provided curl command
-        DEPLOY_RESPONSE=$(curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" -H "Accept:application/json" -F 'project=Test' -F "file=@${IAR_FILE}" -F 'type=application/octet-stream' "$UPLOAD_URL" 2>&1)
+        DEPLOY_RESPONSE=$(curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" -H "Accept:application/json" -F 'projectName=TEST' -F "file=@${IAR_FILE}" -F 'type=application/octet-stream' "$UPLOAD_URL" 2>&1)
         
         echo "Deploy response: $DEPLOY_RESPONSE"
         

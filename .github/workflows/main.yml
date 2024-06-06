@@ -103,14 +103,13 @@ jobs:
 
     - name: Deploy to New Integration Server
       env:
-        TOKEN_TYPE: "Bearer "
-        BEARER_TOKEN: ${{ secrets.NEW_SERVER_TOKEN }}
+        ACCESS_TOKEN: ${{ secrets.NEW_SERVER_TOKEN }}
       run: |
         INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
         TARGET_DIR="path/to/store/in/repo"
         IAR_FILE="${TARGET_DIR}/${INTEGRATION_ID}.iar"
-        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/archive?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
+        UPLOAD_URL="https://integration.us.oraclecloud.com/ic/api/integration/v1/integrations/archive?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
         
         echo "Deploying IAR file to new server..."
         echo "Using Integration ID: $INTEGRATION_ID"
@@ -118,5 +117,25 @@ jobs:
         echo "Using Upload URL: $UPLOAD_URL"
         
         # Send the request using the provided curl command
-        curl -X POST -v -k --insecure --location-trusted -F "file=@${IAR_FILE}" -F 'type=application/octet-stream' "$UPLOAD_URL" --ssl-no-revoke --header "Authorization: ${TOKEN_TYPE}${BEARER_TOKEN}" || { echo "Deployment failed"; exit 1; }
-        echo "Deployment successful!"
+        DEPLOY_RESPONSE=$(curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" -H "Accept:application/json" -F "file=@${IAR_FILE}" -F 'type=application/octet-stream' "$UPLOAD_URL" 2>&1)
+        
+        echo "Deploy response: $DEPLOY_RESPONSE"
+        
+        if echo "$DEPLOY_RESPONSE" | grep -q "HTTP 412 Precondition Failed"; then
+          echo "Error: No Projects for imports. Ensure the target environment is correctly set up to receive the import."
+          exit 1
+        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 404 Not Found"; then
+          echo "Error: Integration not found. Verify the integration ID and version."
+          exit 1
+        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 401 Unauthorized"; then
+          echo "Error: Unauthorized. Check the authentication token."
+          exit 1
+        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 400 Bad Request"; then
+          echo "Error: Bad request. Verify the request parameters."
+          exit 1
+        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 200 OK"; then
+          echo "Deployment successful!"
+        else
+          echo "Deployment failed with unexpected response: $DEPLOY_RESPONSE"
+          exit 1
+        fi

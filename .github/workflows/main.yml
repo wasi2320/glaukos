@@ -109,7 +109,7 @@ jobs:
         INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
         TARGET_DIR="path/to/store/in/repo"
         IAR_FILE="${TARGET_DIR}/${INTEGRATION_ID}.iar"
-        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/deploy?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
+        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
         
         echo "Deploying IAR file to new server..."
         # Read the content of the IAR file and convert it to a base64 string

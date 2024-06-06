@@ -1,4 +1,4 @@
-name: Download and Push IAR File
+name: Download, Push, and Deploy IAR File
 
 on:
   workflow_dispatch:
@@ -92,3 +92,25 @@ jobs:
         TAG_NAME="${INTEGRATION_ID}-${INTEGRATION_VERSION}"
         git tag $TAG_NAME
         git push origin $TAG_NAME
+
+  deploy_to_new_server:
+    needs: download_and_push
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Deploy to New Integration Server
+      env:
+        ACCESS_TOKEN: ${{ secrets.NEW_SERVER_TOKEN }}
+      run: |
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
+        TARGET_DIR="path/to/store/in/repo"
+        IAR_FILE="${TARGET_DIR}/${INTEGRATION_ID}.iar"
+        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/deploy?integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
+        
+        echo "Deploying IAR file to new server..."
+        curl -X POST -F "file=@${IAR_FILE}" -H "Authorization: Bearer $ACCESS_TOKEN" "$UPLOAD_URL" || { echo "Deployment failed"; exit 1; }
+        echo "Deployment successful!"

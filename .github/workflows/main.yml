@@ -30,7 +30,7 @@ jobs:
       run: |
         INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
-        DOWNLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}?integrationInstance=gosaas-oic-gosaas-ia"
+        DOWNLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/${INTEGRATION_ID}|${INTEGRATION_VERSION}/archive?includeRecordingFlag=false*&allowLockedProject=true*&integrationInstance=gosaas-oic-gosaas-ia"
         echo "Download URL: $DOWNLOAD_URL"
 
         curl -o "${INTEGRATION_ID}.iar" -H "Authorization: Bearer $ACCESS_TOKEN" "$DOWNLOAD_URL" || { echo "Download failed"; exit 1; }

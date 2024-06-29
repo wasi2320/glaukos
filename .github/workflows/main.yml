@@ -30,6 +30,7 @@ jobs:
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -H "Authorization: Basic $(echo -n "${{ secrets.SOURCE_INTEGRATION_CLIENTID }}:${{ secrets.SOURCE_INTEGRATION_CLIENT_PASSWORD }}" | base64)" \
         -d 'grant_type=client_credentials&scope=https%3A%2F%2F27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com%3A443urn%3Aopc%3Aresource%3Aconsumer%3A%3Aall' | jq -r '.access_token')
+        echo $TOKEN
         echo "TOKEN=$TOKEN" >> $GITHUB_ENV
 
     - name: Download IAR File

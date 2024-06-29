@@ -26,9 +26,9 @@ jobs:
     - name: Acquire OAuth Token
       run: |
         RESPONSE=$(curl -X POST \
-        'https://idcs-8ee74fa3a3744beda80d235994a9c0ce.identity.oraclecloud.com/oauth2/v1/token' \
+        "${{ secrets.SOURCE_INTEGRATION_OAUTH_URL }}" \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        -H "Authorization: Basic NzNjNDlhNTQ1YjUwNGRiNGFhOTFmMjczNTYzNjYyMzE6YTg3OTllYzctM2MyOS00NzdmLTkwODUtYWEwMWViNjkxZGVl" \
+        -H "Authorization: Basic "${{ secrets.SOURCE_INTEGRATION_BAS64_CLIENT_ID }}"" \
         -d 'grant_type=client_credentials&scope=https://27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com:443urn:opc:resource:consumer::all')
         echo $RESPONSE
 

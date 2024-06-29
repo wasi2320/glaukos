@@ -25,13 +25,12 @@ jobs:
 
     - name: Acquire OAuth Token
       run: |
-        TOKEN=$(curl -X POST \
+        echo TOKEN=$(curl -X POST \
         'https://idcs-8ee74fa3a3744beda80d235994a9c0ce.identity.oraclecloud.com/oauth2/v1/token' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -H "Authorization: Basic $(echo -n "73c49a545b504db4aa91f27356366231:a8799ec7-3c29-477f-9085-aa01eb691dee" | base64)" \
         -d 'grant_type=client_credentials&scope=https%3A%2F%2F27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com%3A443urn%3Aopc%3Aresource%3Aconsumer%3A%3Aall' | jq -r '.access_token')
-        echo $TOKEN
-        echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+
 
     - name: Download IAR File
       id: download_iar

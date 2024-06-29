@@ -23,10 +23,20 @@ jobs:
     - name: Install jq
       run: sudo apt-get install -y jq
 
+    - name: Acquire OAuth Token
+      id: get_token
+      run: |
+        TOKEN=$(curl -X POST \
+        ${{ secrets.SOURCE_INTEGRATION_OAUTH_URL }} \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H 'Authorization: Basic '$(echo -n "${{ secrets.SOURCE_INTEGRATION_CLIENTID }}:${{ secrets.SOURCE_INTEGRATION_CLIENT_PASSWORD }}" | base64)' \
+        -d 'grant_type=client_credentials&scope=https%3A%2F%2F27AB99603F0E412C82017D2BD66711A2.integration.ocp.oraclecloud.com%3A443urn%3Aopc%3Aresource%3Aconsumer%3A%3Aall' | jq -r '.access_token')
+        echo "ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
+
     - name: Download IAR File
       id: download_iar
       env:
-        ACCESS_TOKEN: ${{ secrets.TOKEN }}
+        ACCESS_TOKEN: ${{ env.ACCESS_TOKEN }}
       run: |
         INTEGRATION_ID=${{ github.event.inputs.integration_id }}
         INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
@@ -92,50 +102,3 @@ jobs:
         TAG_NAME="${INTEGRATION_ID}-${INTEGRATION_VERSION}"
         git tag $TAG_NAME
         git push origin $TAG_NAME
-
-  deploy_to_new_server:
-    needs: download_and_push
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Deploy to New Integration Server
-      env:
-        ACCESS_TOKEN: ${{ secrets.NEW_SERVER_TOKEN }}
-      run: |
-        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
-        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
-        TARGET_DIR="path/to/store/in/repo"
-        IAR_FILE="${TARGET_DIR}/${INTEGRATION_ID}.iar"
-        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/archive?includeRecordingFlag=false&integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
-        
-        echo "Deploying IAR file to new server..."
-        echo "Using Integration ID: $INTEGRATION_ID"
-        echo "Using Integration Version: $INTEGRATION_VERSION"
-        echo "Using Upload URL: $UPLOAD_URL"
-        
-        # Send the request using the provided curl command
-        DEPLOY_RESPONSE=$(curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" -H "Accept:application/json" -F type=application/octet-stream -F file=@path/to/store/in/repo/GREETING_API.iar "$UPLOAD_URL" 2>&1)
-        
-        echo "Deploy response: $DEPLOY_RESPONSE"
-        
-        if echo "$DEPLOY_RESPONSE" | grep -q "HTTP 412 Precondition Failed"; then
-          echo "Error: No Projects for imports. Ensure the target environment is correctly set up to receive the import."
-          exit 1
-        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 404 Not Found"; then
-          echo "Error: Integration not found. Verify the integration ID and version."
-          exit 1
-        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 401 Unauthorized"; then
-          echo "Error: Unauthorized. Check the authentication token."
-          exit 1
-        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 400 Bad Request"; then
-          echo "Error: Bad request. Verify the request parameters."
-          exit 1
-        elif echo "$DEPLOY_RESPONSE" | grep -q "HTTP 200 OK"; then
-          echo "Deployment successful!"
-        else
-          echo "Deployment failed with unexpected response: $DEPLOY_RESPONSE"
-          exit 1
-        fi

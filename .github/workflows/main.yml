@@ -23,7 +23,7 @@ jobs:
     - name: Install jq
       run: sudo apt-get install -y jq
 
-    - name: Acquire OAuth Token
+    - name: Acquire Source OAuth Token
       run: |
         TOKEN=$(curl -X POST \
         "${{ secrets.SOURCE_INTEGRATION_OAUTH_URL }}" \
@@ -101,3 +101,28 @@ jobs:
         TAG_NAME="${INTEGRATION_ID}-${INTEGRATION_VERSION}"
         git tag $TAG_NAME
         git push origin $TAG_NAME
+
+    - name: Acquire Destination OAuth Token
+      run: |
+        TOKEN=$(curl -X POST \
+        "${{ secrets.DESTINATION_INTEGRATION_OAUTH_URL }}" \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "Authorization: Basic ${{ secrets.DESTINATION_INTEGRATION_BAS64_CLIENT_ID }}" \
+        -d 'grant_type=client_credentials&scope=https://158A35A4D010448484321918F640044F.integration.us-ashburn-1.ocp.oraclecloud.com:443urn:opc:resource:consumer::all' | jq -r '.access_token')
+        echo "DESTINATION_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+    - name: Deploy to New Integration Server
+      env:
+        ACCESS_TOKEN: ${{ env.DESTINATION_ACCESS_TOKEN }}
+      run: |
+        INTEGRATION_ID=${{ github.event.inputs.integration_id }}
+        INTEGRATION_VERSION=${{ github.event.inputs.integration_version }}
+        TARGET_DIR="path/to/store/in/repo"
+        IAR_FILE="${TARGET_DIR}/${INTEGRATION_ID}.iar"
+        UPLOAD_URL="https://design.integration.us-ashburn-1.ocp.oraclecloud.com/ic/api/integration/v1/integrations/archive?includeRecordingFlag=false&integrationInstance=gosaas-oic-dev-tbt-gosaas-ia"
+        echo "Deploying IAR file to new server..."
+        echo "Using Integration ID: $INTEGRATION_ID"
+        echo "Using Integration Version: $INTEGRATION_VERSION"
+        echo "Using Upload URL: $UPLOAD_URL"
+        DEPLOY_RESPONSE=$(curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" -H "Accept:application/json" -F type=application/octet-stream -F file=@$IAR_FILE "$UPLOAD_URL" 2>&1)
+        echo "Deploy response: $DEPLOY_RESPONSE"
